@@ -1,0 +1,23 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+build/
+*.apk
+*.ipa
+/ios/Flutter/Flutter.framework/
+/ios/Flutter/Flutter.podspec
+/ios/Pods/
+/android/.gradle/
+# XLL build
+xll/build/
+build/
+.vs/
+*.user
+# OS
+.DS_Store
+Thumbs.db
+# IDE
+.idea/
+*.iml

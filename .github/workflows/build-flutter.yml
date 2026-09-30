@@ -1,0 +1,102 @@
+name: build-flutter
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          channel: stable
+      - name: mobile_app analyze
+        working-directory: mobile_app
+        run: |
+          flutter create --platforms=android,ios . || true
+          flutter pub get
+          flutter analyze
+      - name: desktop_login analyze
+        working-directory: desktop_login
+        run: |
+          flutter create --platforms=windows,macos,linux . || true
+          flutter pub get
+          flutter analyze
+
+  build-android:
+    needs: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          channel: stable
+      - name: Build APK
+        working-directory: mobile_app
+        run: |
+          flutter create --platforms=android,ios . || true
+          flutter pub get
+          python3 ../ci/patch_redirect.py
+          flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile_app-android-apk
+          path: mobile_app/build/app/outputs/flutter-apk/app-release.apk
+
+  build-ios:
+    needs: analyze
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          channel: stable
+      - name: Build iOS (unsigned)
+        working-directory: mobile_app
+        run: |
+          flutter create --platforms=android,ios . || true
+          flutter pub get
+          python3 ../ci/patch_redirect.py
+          flutter build ios --release --no-codesign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile_app-ios-app
+          path: mobile_app/build/ios/iphoneos/Runner.app
+
+  build-desktop:
+    needs: analyze
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          channel: stable
+      - name: Build desktop (${{ matrix.platform }})
+        working-directory: desktop_login
+        run: |
+          flutter create --platforms=windows,macos,linux . || true
+          flutter pub get
+          flutter build ${{ matrix.platform }} --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop_login-${{ matrix.platform }}
+          path: |
+            desktop_login/build/${{ matrix.platform }}/**/Release/**
+            desktop_login/build/${{ matrix.platform }}/**/release/**

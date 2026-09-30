@@ -1,0 +1,7 @@
+LIBRARY DeviceLogin
+EXPORTS
+    xlAutoOpen
+    xlAutoClose
+    xlAutoFree12
+    xlAddInManagerInfo12
+    DeviceLogin
