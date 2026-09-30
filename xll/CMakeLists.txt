@@ -12,7 +12,7 @@ add_library(DeviceLogin SHARED
     device_flow.cpp
     xlcall.cpp
     qrcodegen.cpp
-    resource.rc
+    login.rc
     xll.def
 )
 
@@ -23,5 +23,5 @@ target_link_libraries(DeviceLogin user32 gdi32 winhttp)
 
 # 关闭 MSVC 警告噪声
 if(MSVC)
-    target_compile_options(DeviceLogin PRIVATE /W3 /EHsc)
+    target_compile_options(DeviceLogin PRIVATE /W3 /EHsc /utf-8 /D_CRT_SECURE_NO_WARNINGS)
 endif()

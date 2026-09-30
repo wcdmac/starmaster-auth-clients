@@ -1,8 +1,8 @@
 // XLL 入口：导出 Excel 要求的 xlAutoOpen / xlAutoClose / xlAutoFree12 / xlAddInManagerInfo12，
 // 并注册 DeviceLogin() UDF（弹出扫码登录对话框，返回 "OK"/错误文本，并把 token 写到 %TEMP%）。
+#include <windows.h>
 #include "xlcall.h"
 #include "login_dialog.h"
-#include <windows.h>
 #include <string>
 #include <cstdlib>
 #include <cwchar>
