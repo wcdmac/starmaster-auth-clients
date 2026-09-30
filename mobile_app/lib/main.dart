@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'keycloak_config.dart';
 
@@ -69,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
             'username: ${claims?['preferred_username'] ?? '-'}\n'
             'expires_in: ${result.accessTokenExpirationDateTime ?? '-'}';
       });
-    } on FlutterAppAuthPlatformException catch (e) {
+    } on PlatformException catch (e) {
       setState(() {
         _status = '登录失败或被取消';
         _detail = e.toString();
