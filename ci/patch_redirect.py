@@ -94,6 +94,33 @@ def patch_android_gradle():
             f.write(s)
 
 
+def patch_android_localprops():
+    """flutter_appauth 等插件模块的 compileSdk 来自 flutter.compileSdkVersion
+    （由 android/local.properties 提供）。仅改 app 模块的 build.gradle.kts 不够，
+    必须在这里把 flutter.compileSdkVersion 提到 >=34，插件模块才会继承，
+    否则 :flutter_appauth 仍按 android-31 编译，AAR 元数据校验失败。
+    """
+    path = os.path.join(MOBILE, "android", "local.properties")
+    if not os.path.exists(path):
+        print(f"[skip] local.properties not found: {path}")
+        return
+    with open(path, encoding="utf-8") as f:
+        lines = f.readlines()
+    out = []
+    found = False
+    for line in lines:
+        if line.startswith("flutter.compileSdkVersion"):
+            out.append("flutter.compileSdkVersion=35\n")
+            found = True
+        else:
+            out.append(line)
+    if not found:
+        out.append("flutter.compileSdkVersion=35\n")
+    with open(path, "w", encoding="utf-8") as f:
+        f.writelines(out)
+    print("[ok] local.properties flutter.compileSdkVersion set to 35")
+
+
 def patch_ios():
     path = os.path.join(MOBILE, "ios", "Runner", "Info.plist")
     if not os.path.exists(path):
@@ -128,6 +155,7 @@ def patch_ios():
 if __name__ == "__main__":
     patch_android()
     patch_android_gradle()
+    patch_android_localprops()
     patch_ios()
     print("done")
     sys.exit(0)
