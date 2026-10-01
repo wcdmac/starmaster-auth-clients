@@ -40,32 +40,58 @@ def patch_android():
 
 
 def patch_android_gradle():
-    """flutter_appauth 的 AndroidManifest 需要 appAuthRedirectScheme 占位符，
-    否则 manifest 合并报 'requires a placeholder substitution'。scheme 取 myapp（myapp://callback）。
+    """给 flutter create 生成的 build.gradle.kts 打两处补丁：
+    1) appAuthRedirectScheme 占位符（flutter_appauth 的 manifest 合并要求）；
+    2) compileSdk 强制设为 35（flutter_appauth 8.x 的 AAR 要求 compileSdk >= 34，
+       否则 checkReleaseAarMetadata 失败）。
     """
+    import re
     path = os.path.join(MOBILE, "android", "app", "build.gradle.kts")
     if not os.path.exists(path):
         print(f"[skip] build.gradle.kts not found: {path}")
         return
     with open(path, encoding="utf-8") as f:
         s = f.read()
-    if "appAuthRedirectScheme" in s:
+    changed = False
+
+    # 1) appAuthRedirectScheme 占位符
+    if "appAuthRedirectScheme" not in s:
+        marker = "defaultConfig {"
+        idx = s.find(marker)
+        if idx == -1:
+            print("[skip] defaultConfig not found in build.gradle.kts")
+        else:
+            insert_at = idx + len(marker)
+            nl = s.find("\n", insert_at)
+            if nl == -1:
+                nl = len(s)
+            s = s[:nl] + '\n        manifestPlaceholders["appAuthRedirectScheme"] = "myapp"' + s[nl:]
+            changed = True
+            print("[ok] appAuthRedirectScheme injected into build.gradle.kts")
+    else:
         print("[ok] appAuthRedirectScheme already set")
-        return
-    marker = "defaultConfig {"
-    idx = s.find(marker)
-    if idx == -1:
-        print("[skip] defaultConfig not found in build.gradle.kts")
-        return
-    insert_at = idx + len(marker)
-    nl = s.find("\n", insert_at)
-    if nl == -1:
-        nl = len(s)
-    # Kotlin DSL: manifestPlaceholders 是 MutableMap，按 key 赋值
-    s = s[:nl] + '\n        manifestPlaceholders["appAuthRedirectScheme"] = "myapp"' + s[nl:]
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(s)
-    print("[ok] appAuthRedirectScheme injected into build.gradle.kts")
+
+    # 2) compileSdk >= 34
+    new_s, n = re.subn(r'compileSdk\s*=\s*[^;\n]+', 'compileSdk = 35', s)
+    if n == 0:
+        m = s.find("android {")
+        if m != -1:
+            ins = m + len("android {")
+            nl = s.find("\n", ins)
+            if nl == -1:
+                nl = len(s)
+            new_s = s[:nl] + "\n    compileSdk = 35" + s[nl:]
+            changed = True
+    if new_s != s:
+        s = new_s
+        changed = True
+        print("[ok] compileSdk set to 35")
+    else:
+        print("[ok] compileSdk already >= 34")
+
+    if changed:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(s)
 
 
 def patch_ios():
