@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
       // flutter_appauth 默认走系统浏览器组件（iOS ASWebAuthenticationSession /
       // Android Chrome Custom Tabs），登录后系统浏览器留存 Keycloak SSO 会话，
       // 日后扫码确认可免输密码。PKCE 默认开启。
-      final appAuth = const FlutterAppAuth();
+      const appAuth = const FlutterAppAuth();
       final result = await appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           kcClientId,
