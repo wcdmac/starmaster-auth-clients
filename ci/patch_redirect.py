@@ -39,6 +39,35 @@ def patch_android():
     print("[ok] Android redirect injected")
 
 
+def patch_android_gradle():
+    """flutter_appauth 的 AndroidManifest 需要 appAuthRedirectScheme 占位符，
+    否则 manifest 合并报 'requires a placeholder substitution'。scheme 取 myapp（myapp://callback）。
+    """
+    path = os.path.join(MOBILE, "android", "app", "build.gradle.kts")
+    if not os.path.exists(path):
+        print(f"[skip] build.gradle.kts not found: {path}")
+        return
+    with open(path, encoding="utf-8") as f:
+        s = f.read()
+    if "appAuthRedirectScheme" in s:
+        print("[ok] appAuthRedirectScheme already set")
+        return
+    marker = "defaultConfig {"
+    idx = s.find(marker)
+    if idx == -1:
+        print("[skip] defaultConfig not found in build.gradle.kts")
+        return
+    insert_at = idx + len(marker)
+    nl = s.find("\n", insert_at)
+    if nl == -1:
+        nl = len(s)
+    # Kotlin DSL: manifestPlaceholders 是 MutableMap，按 key 赋值
+    s = s[:nl] + '\n        manifestPlaceholders["appAuthRedirectScheme"] = "myapp"' + s[nl:]
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(s)
+    print("[ok] appAuthRedirectScheme injected into build.gradle.kts")
+
+
 def patch_ios():
     path = os.path.join(MOBILE, "ios", "Runner", "Info.plist")
     if not os.path.exists(path):
@@ -72,6 +101,7 @@ def patch_ios():
 
 if __name__ == "__main__":
     patch_android()
+    patch_android_gradle()
     patch_ios()
     print("done")
     sys.exit(0)
