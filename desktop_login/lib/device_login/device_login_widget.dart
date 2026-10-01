@@ -1,4 +1,6 @@
 /// 设备端扫码登录 UI 组件（Flutter 桌面）。将 DeviceLoginService 的轮询流接成界面状态。
+library device_login_widget;
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';

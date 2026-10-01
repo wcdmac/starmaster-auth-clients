@@ -136,7 +136,7 @@ class DeviceLoginService {
           break;
       }
     }
-    yield const PollResult.expired();
+    yield PollResult.expired();
   }
 
   void dispose() => _client.close();
