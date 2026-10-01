@@ -60,19 +60,21 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Build iOS (unsigned) and zip
+      - name: Build iOS (unsigned) and package as IPA
         working-directory: mobile_app
         run: |
           flutter create --platforms=android,ios . || true
           flutter pub get
           python3 ../ci/patch_redirect.py
           flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
-          zip -r "$GITHUB_WORKSPACE/ios-app.zip" Runner.app
+          # IPA = zip 内含 Payload/<app>.app；仅改后缀不行，必须包一层 Payload
+          mkdir -p Payload
+          ditto build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -r "$GITHUB_WORKSPACE/ios-app.ipa" Payload
       - uses: actions/upload-artifact@v4
         with:
-          name: mobile_app-ios-app
-          path: ${{ github.workspace }}/ios-app.zip
+          name: mobile_app-ios-ipa
+          path: ${{ github.workspace }}/ios-app.ipa
 
   # ---------- 桌面端（Win/Mac/Linux）----------
   build-desktop:
